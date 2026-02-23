@@ -3,94 +3,118 @@ import subprocess
 import sys
 import json
 import os
+import random
 
-# 1. Центрированный макет
+# Центрированный макет
 st.set_page_config(page_title="Marvel Rivals Hub", page_icon="🎃️", layout="wide")
 
+# Генерируем 40 светлячков со случайными параметрами
+fireflies_html = ""
+for i in range(45):  # Сделаем чуть побольше для густоты
+    size = random.randint(4, 8)
+    pos_left = random.randint(0, 98)
+    pos_top = random.randint(0, 98)
+    duration = random.randint(15, 30)
+    delay = random.randint(0, 20)
+    color = "#ff7518" if i % 2 == 0 else "#9400d3"
+
+    fireflies_html += f'<div class="firefly" style="width:{size}px; height:{size}px; top:{pos_top}%; left:{pos_left}%; background:{color}; animation-duration:{duration}s; animation-delay:{delay}s;"></div>'
+
 # 2. Чистый CSS: добавили ограничение ширины и лоск
-st.markdown("""
+st.markdown(f"""
     <style>
-    /* Главный фон — глубокий полночный черный с фиолетовым отливом */
-    .stApp {
-        background: radial-gradient(circle, #1a0f2e 0%, #050505 100%);
-    }
+    /* ГЛАВНЫЙ ФОН (Джефф-тыква) */
+    .stApp {{
+        background-image: url("https://github.com/Mumunich/marvel-rivals-meta-tracker/raw/main/703948.jpg");
+        background-attachment: fixed;
+        background-size: cover;
+        background-position: center;
+    }}
 
-    /* Ограничиваем контент */
-    .block-container {
-        max-width: 1200px;
-        padding-top: 2rem;
-    }
+    /* КОНТЕНТ: Стеклянная подложка */
+    .block-container {{
+        max-width: 1100px;
+        background: rgba(15, 8, 25, 0.3); 
+        border-radius: 25px;
+        border: 1px solid rgba(255, 117, 24, 0.3);
+        padding: 40px !important;
+        margin-top: 2rem;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(0px);
+    }}
 
-    /* Заголовки — неоновый оранжевый с "тлеющим" эффектом */
-    h1, h2, h3 {
-        color: #ff7518 !important;
-        text-shadow: 0 0 10px #ff4500, 0 0 20px #ff7518;
-        font-family: 'Courier New', Courier, monospace;
-    }
+    /* ТЛЕЮЩИЙ ЗАГОЛОВОК */
+    .halloween-title {{
+        color: #ff7518;
+        text-align: center;
+        font-size: 40px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        animation: flicker 3s infinite alternate;
+    }}
+    @keyframes flicker {{
+        0%, 100% {{ text-shadow: 0 0 10px #ff4500, 0 0 20px #ff7518; }}
+        50% {{ text-shadow: 0 0 30px #9400d3, 0 0 15px #ff4500; opacity: 0.9; }}
+    }}
 
-    /* Кнопки — как магические артефакты */
-    .stButton>button {
+    /* КНОПКИ-АРТЕФАКТЫ */
+    .stButton>button {{
         width: 100%;
         border-radius: 12px;
         font-size: 12px;
-        height: 32px;
+        height: 36px;
         background: linear-gradient(135deg, #4b0082 0%, #000000 100%) !important;
         color: #ff7518 !important;
         border: 1px solid #ff7518 !important;
-        transition: 0.4s ease-in-out;
+        transition: 0.4s ease-in-out !important;
         box-shadow: 0 0 5px #4b0082;
-    }
+    }}
 
-    .stButton>button:hover {
+    .stButton>button:hover {{
         border-color: #ffffff !important;
         color: #ffffff !important;
         box-shadow: 0 0 20px #ff7518;
         transform: translateY(-3px) rotate(-1deg);
-    }
+    }}
 
-    /* Иконки героев — легкое свечение при наведении */
-    .stImage {
-        transition: 0.5s;
-        filter: grayscale(30%);
-    }
-    .stImage:hover {
+    /* ИКОНКИ ГЕРОЕВ (Морды) */
+    [data-testid="stImage"] {{
+        transition: 0.5s !important;
+        filter: grayscale(20%);
+    }}
+    [data-testid="column"]:hover [data-testid="stImage"] {{
         filter: grayscale(0%) drop-shadow(0 0 15px #9400d3);
-        transform: scale(1.2);
-    }
+        transform: scale(1.2) rotate(5deg);
+    }}
 
-    /* Вкладки (Tabs) */
-    .stTabs [data-baseweb="tab-list"] {
-        background-color: transparent;
-        gap: 20px;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #ff7518 !important;
-        border-radius: 10px 10px 0 0;
-        border: 1px solid #4b0082;
-        padding: 10px 20px;
-    }
-    .stTabs [data-baseweb="tab"]:hover {
-        background-color: #4b0082;
-    }
-
-    /* Скриншоты с "рамкой" */
-    img {
-        border: 2px solid #4b0082;
-        border-radius: 15px;
+    /* СВЕТЛЯЧКИ: ФИКСИРОВАННОЕ ПОЗИЦИОНИРОВАНИЕ */
+        .firefly {{
+        position: fixed !important; /* Ультимативно фиксируем */
+        border-radius: 50%;
         pointer-events: none;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    }
+        z-index: 999999 !important; /* Поднимаем ВЫШЕ шапки и стекла */
+        opacity: 0;
+        animation: slowDrift linear infinite, pulseGlow ease-in-out infinite;
+    }}
 
-    /* Анимация появления */
-    @keyframes ghostFade {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .stImage, .stMarkdown {
-        animation: ghostFade 1.5s ease-out;
-    }
+    /* Убираем перекрытие от контейнеров Streamlit */
+    iframe {{ z-index: 1; }}
+    
+    @keyframes slowDrift {{
+        0% {{ transform: translate(0, 0); opacity: 0; }}
+        10% {{ opacity: 0.8; }}
+        100% {{ transform: translate(100px, -600px); opacity: 0; }}
+    }}
+
+    @keyframes pulseGlow {{
+        0%, 100% {{ filter: blur(2px); box-shadow: 0 0 8px currentColor; }}
+        50% {{ filter: blur(5px); box-shadow: 0 0 20px currentColor; }}
+    }}
     </style>
-    """, unsafe_allow_html=True)
+    
+    {fireflies_html}
+""", unsafe_allow_html=True)
 
 st.markdown("<h1 style='text-align: center;'>🦇 MARVEL RIVALS: HALLOWEEN META 🦇</h1>", unsafe_allow_html=True)
 
@@ -152,4 +176,12 @@ with tab_skins:
                             # Выводим результат в зарезервированное место НАВЕРХУ
                             skin_display.image(img_path, use_container_width=True)
 
-st.caption("Данные обновляются в реальном времени. Сделано на Python.")
+# --- ФУТЕР (В самом низу файла) ---
+st.markdown("---") # Разделительная линия
+
+# Используем кастомный HTML для футера, чтобы он вписался в стиль
+st.markdown("""
+    <div style="text-align: center; color: rgba(255, 117, 24, 0.6); font-size: 14px; padding: 20px;">
+        🕸️ Данные обновляются в реальном времени. Сделано на Python. 🕷️
+    </div>
+""", unsafe_allow_html=True)
